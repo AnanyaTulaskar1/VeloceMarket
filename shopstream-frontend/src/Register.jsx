@@ -1,154 +1,75 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import API from './api';
 
-const Register = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'customer' });
-  const [status, setStatus] = useState({ type: '', message: '' });
+function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    setStatus({ type: '', message: '' });
+    setLoading(true);
     try {
-      const response = await API.post('/auth/register', formData);
-      localStorage.setItem('token', response.data.token);
-      setStatus({ type: 'success', message: `🎉 Welcome, ${response.data.name}! Account created.` });
-    } catch (error) {
-      setStatus({ 
-        type: 'error', 
-        message: error.response?.data?.message || 'Registration failed. Try a different email!' 
+      // Register with role: 'customer' by default
+      await API.post('/auth/register', { 
+        name, 
+        email, 
+        password, 
+        role: 'customer' 
       });
+      
+      navigate('/login');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={cardStyle}>
-      <div style={headerContainer}>
-        <h2 style={titleStyle}>ShopStream</h2>
-        <p style={subtitleStyle}>Create your marketplace account</p>
+    <div style={{ backgroundColor: '#FAD6C0', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px 10px', fontFamily: '"Poppins", sans-serif', boxSizing: 'border-box' }}>
+      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0px 20px 50px rgba(0, 0, 0, 0.05)', padding: '45px 50px', boxSizing: 'border-box', textAlign: 'center' }}>
+        
+        <h2 style={{ fontSize: '2.4rem', color: '#4a3f35', fontFamily: 'serif', margin: '0 0 10px 0' }}>Join VeloceMarket</h2>
+        <p style={{ color: '#8e8376', fontSize: '14px', lineHeight: '1.6', margin: '0 0 35px 0' }}>
+          Create an account to begin your journey with our hand-crafted floral collection.
+        </p>
+
+        <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '18px', textAlign: 'left' }}>
+          
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a3f35', marginBottom: '8px' }}>Full Name</label>
+            <input type="text" placeholder="Your Name" value={name} onChange={e => setName(e.target.value)} required style={contactInputStyle} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a3f35', marginBottom: '8px' }}>Email Address</label>
+            <input type="email" placeholder="email@example.com" value={email} onChange={e => setEmail(e.target.value)} required style={contactInputStyle} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a3f35', marginBottom: '8px' }}>Password</label>
+            <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required style={contactInputStyle} />
+          </div>
+
+          <button type="submit" disabled={loading} style={{ ...contactSubmitBtnStyle, opacity: loading ? 0.7 : 1 }}>
+            {loading ? "Creating Account... ⏳" : "Create Account ✨"}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '25px', fontSize: '13px' }}>
+          <p style={{ color: '#8e8376' }}>Already have an account? <span onClick={() => navigate('/login')} style={{ color: '#bd9672', cursor: 'pointer', fontWeight: '600' }}>Login here</span></p>
+        </div>
       </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}>Full Name</label>
-          <input type="text" name="name" placeholder="John Doe" onChange={handleChange} required style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Email Address</label>
-          <input type="email" name="email" placeholder="you@example.com" onChange={handleChange} required style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Password</label>
-          <input type="password" name="password" placeholder="••••••••" onChange={handleChange} required style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Account Role</label>
-          <select name="role" onChange={handleChange} style={inputStyle}>
-            <option value="customer">🛒 Customer (Standard User)</option>
-            <option value="admin">⚡ Admin (Store Manager)</option>
-          </select>
-        </div>
-
-        <button type="submit" style={buttonStyle}>
-          Create Account
-        </button>
-      </form>
-
-      {status.message && (
-        <div style={{
-          ...messageBoxStyle,
-          backgroundColor: status.type === 'success' ? '#ef444415' : '#ef444415',
-          color: status.type === 'success' ? '#22c55e' : '#ef4444',
-          border: `1px solid ${status.type === 'success' ? '#22c55e30' : '#ef444430'}`
-        }}>
-          {status.message}
-        </div>
-      )}
     </div>
   );
-};
+}
 
-/* --- PREMIUM STYLING OBJECTS --- */
-const cardStyle = {
-  backgroundColor: '#ffffff',
-  padding: '40px',
-  borderRadius: '16px',
-  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-  width: '100%',
-  maxWidth: '420px',
-  boxSizing: 'border-box',
-  animation: 'fadeIn 0.4s ease-out',
-};
-
-const headerContainer = {
-  textAlign: 'center',
-  marginBottom: '28px',
-};
-
-const titleStyle = {
-  margin: '0 0 6px 0',
-  fontSize: '28px',
-  fontWeight: '800',
-  background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-};
-
-const subtitleStyle = {
-  margin: '0',
-  color: '#64748b',
-  fontSize: '14px',
-};
-
-const labelStyle = {
-  display: 'block',
-  marginBottom: '6px',
-  fontSize: '13px',
-  fontWeight: '600',
-  color: '#475569',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '12px 14px',
-  fontSize: '15px',
-  border: '1px solid #cbd5e1',
-  borderRadius: '8px',
-  backgroundColor: '#f8fafc',
-  color: '#1e293b',
-  outline: 'none',
-  transition: 'all 0.2s ease',
-  boxSizing: 'border-box',
-};
-
-const buttonStyle = {
-  width: '100%',
-  padding: '14px',
-  fontSize: '16px',
-  fontWeight: '600',
-  color: '#ffffff',
-  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-  border: 'none',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)',
-  marginTop: '10px',
-  transition: 'transform 0.1s ease',
-};
-
-const messageBoxStyle = {
-  marginTop: '20px',
-  padding: '12px',
-  borderRadius: '8px',
-  textAlign: 'center',
-  fontSize: '14px',
-  fontWeight: '500',
-};
+// Reusing same styles for consistent UI
+const contactInputStyle = { width: '100%', border: '1px solid #ebd9ca', backgroundColor: '#ffffff', padding: '14px 18px', borderRadius: '12px', outline: 'none', fontSize: '14px', color: '#4a3f35', boxSizing: 'border-box' };
+const contactSubmitBtnStyle = { width: '100%', backgroundColor: '#bd9672', color: '#ffffff', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '600', fontSize: '15px', cursor: 'pointer', marginTop: '15px' };
 
 export default Register;

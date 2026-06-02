@@ -1,91 +1,146 @@
 import React, { useState } from 'react';
 import API from './api';
 
-const Login = ({ onLoginSuccess }) => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [status, setStatus] = useState({ type: '', message: '' });
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+function Login({ onLoginSuccess }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus({ type: '', message: '' });
+    if (loading) return; 
+    
+    setLoading(true);
     try {
-      // Hits your backend login API route
-      const response = await API.post('/auth/login', formData);
+      const response = await API.post('/auth/login', { email, password });
       
-      // Save the new session token in the web browser
-      localStorage.setItem('token', response.data.token);
-      
-      setStatus({ type: 'success', message: '🔒 Login Successful! Redirecting...' });
-      
-      // Let the main App know we are officially logged in
-      if (onLoginSuccess) {
-        onLoginSuccess();
+      if (response.data && response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userRole', response.data.role);
+        
+        // REMOVE OR COMMENT OUT THIS LINE:
+        // alert(`Welcome back, ${response.data.name}! ✨`);
+        
+        // The onLoginSuccess() call handles the redirect to your dashboard automatically
+        onLoginSuccess(response.data);
       }
-    } catch (error) {
-      setStatus({ 
-        type: 'error', 
-        message: error.response?.data?.message || 'Invalid email or password.' 
-      });
+    } catch (err) {
+      console.error("Login Error details:", err);
+      if (!err.response) {
+        alert("Network Error: Cannot connect to your Node server.");
+      } else {
+        alert(err.response.data.message || "Invalid email or password.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div style={cardStyle}>
-      <div style={headerContainer}>
-        <h2 style={titleStyle}>ShopStream</h2>
-        <p style={subtitleStyle}>Sign in to your account</p>
+    <div style={{ backgroundColor: '#FAD6C0', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '30px 10px', fontFamily: '"Poppins", sans-serif', boxSizing: 'border-box' }}>
+      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '32px', width: '100%', maxWidth: '480px', boxShadow: '0px 20px 50px rgba(0, 0, 0, 0.05)', padding: '45px 50px', boxSizing: 'border-box', textAlign: 'center' }}>
+        
+        {/* Custom Brand Logo / Header matching original styling */}
+        <h2 style={{ fontSize: '2.4rem', color: '#4a3f35', fontFamily: 'serif', margin: '0 0 10px 0' }}>VeloceMarket</h2>
+        <p style={{ color: '#8e8376', fontSize: '14px', lineHeight: '1.6', margin: '0 0 35px 0' }}>
+          Welcome back to our artisan studio portal. Please authenticate to step into your flower dashboard.
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px', textAlign: 'left' }}>
+          
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a3f35', marginBottom: '8px' }}>
+              Username / Email Address
+            </label>
+            <input 
+              type="email" 
+              placeholder="Enter the email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required 
+              style={contactInputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#4a3f35', marginBottom: '8px' }}>
+              Account Password
+            </label>
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+              style={contactInputStyle}
+            />
+          </div>
+
+          {/* Secure Login Button themed with boutique aesthetic colors */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{ 
+              ...contactSubmitBtnStyle, 
+              opacity: loading ? 0.7 : 1, 
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginTop: '15px'
+            }}
+          >
+            {loading ? "Verifying Credentials... ⏳" : "Secure Login ✨"}
+          </button>
+        </form>
+
+        {/* Studio Footer Subtext */}
+        {/* ... Inside your Return Statement, below the </form> ... */}
+
+<div style={{ marginTop: '25px', fontSize: '13px', textAlign: 'center' }}>
+  <p style={{ color: '#8e8376' }}>
+    Don't have an account yet?{' '}
+    <span 
+      onClick={() => window.location.href = '/register'} 
+      style={{ 
+        color: '#bd9672', 
+        cursor: 'pointer', 
+        fontWeight: '600',
+        textDecoration: 'underline' 
+      }}
+    >
+      Sign up here
+    </span>
+  </p>
+</div>
+
       </div>
-
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}>Email Address</label>
-          <input type="email" name="email" placeholder="you@example.com" onChange={handleChange} required style={inputStyle} />
-        </div>
-
-        <div>
-          <label style={labelStyle}>Password</label>
-          <input type="password" name="password" placeholder="••••••••" onChange={handleChange} required style={inputStyle} />
-        </div>
-
-        <button type="submit" style={buttonStyle}>
-          Sign In
-        </button>
-      </form>
-
-      {status.message && (
-        <div style={{
-          ...messageBoxStyle,
-          backgroundColor: status.type === 'success' ? '#e2fbe8' : '#fdeded',
-          color: status.type === 'success' ? '#1b5e20' : '#d32f2f',
-          border: `1px solid ${status.type === 'success' ? '#a5d6a7' : '#ef9a9a'}`
-        }}>
-          {status.message}
-        </div>
-      )}
     </div>
   );
+}
+
+// Visual layout constants matched exactly with your main layout parameters
+const contactInputStyle = { 
+  width: '100%', 
+  border: '1px solid #ebd9ca', 
+  backgroundColor: '#ffffff', 
+  padding: '14px 18px', 
+  borderRadius: '12px', 
+  outline: 'none', 
+  fontSize: '14px', 
+  color: '#4a3f35', 
+  boxSizing: 'border-box',
+  transition: 'all 0.3s ease'
 };
 
-/* --- CLEAN DESIGN OBJECTS --- */
-const cardStyle = {
-  backgroundColor: '#ffffff',
-  padding: '40px',
-  borderRadius: '16px',
-  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
-  width: '100%',
-  maxWidth: '420px',
-  boxSizing: 'border-box',
+const contactSubmitBtnStyle = { 
+  width: '100%', 
+  backgroundColor: '#bd9672', 
+  color: '#ffffff', 
+  border: 'none', 
+  padding: '16px', 
+  borderRadius: '12px', 
+  fontWeight: '600', 
+  fontSize: '15px', 
+  cursor: 'pointer',
+  boxShadow: '0 4px 15px rgba(189, 150, 114, 0.2)'
 };
-const headerContainer = { textAlign: 'center', marginBottom: '28px' };
-const titleStyle = { margin: '0 0 6px 0', fontSize: '28px', fontWeight: '800', background: 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' };
-const subtitleStyle = { margin: '0', color: '#64748b', fontSize: '14px' };
-const labelStyle = { display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: '600', color: '#475569' };
-const inputStyle = { width: '100%', padding: '12px 14px', fontSize: '15px', border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#f8fafc', boxSizing: 'border-box', outline: 'none' };
-const buttonStyle = { width: '100%', padding: '14px', fontSize: '16px', fontWeight: '600', color: '#ffffff', background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)', border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)', marginTop: '10px' };
-const messageBoxStyle = { marginTop: '20px', padding: '12px', borderRadius: '8px', textAlign: 'center', fontSize: '14px', fontWeight: '500' };
 
 export default Login;
